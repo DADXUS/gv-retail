@@ -21,9 +21,6 @@ return new class extends Migration
             $table->integer('cantidad')->unsigned()->default(1);
             $table->decimal('precio_unitario', 10, 2);
 
-            // Subtotal calculado (Soporte nativo en Laravel para columnas generadas en MySQL)
-            $table->rawIndex('subtotal', 'generated_subtotal_index')->storedAs('cantidad * precio_unitario');
-
             $table->timestamps();
         });
     }
