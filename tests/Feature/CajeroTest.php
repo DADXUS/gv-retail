@@ -14,9 +14,7 @@ class CajeroTest extends TestCase
 
     public function test_cajero_dashboard_is_rendered(): void
     {
-        $user = User::factory()->create();
-
-        $response = $this->actingAs($user)->get('/cajero/dashboard');
+        $response = $this->get('/cajero/dashboard');
 
         $response->assertStatus(200);
         $response->assertSee('Lector de Código de Barras');
@@ -24,7 +22,6 @@ class CajeroTest extends TestCase
 
     public function test_search_product_returns_json(): void
     {
-        $user = User::factory()->create();
         $producto = Producto::create([
             'barcode' => '12345',
             'nombre' => 'Test Product',
@@ -32,7 +29,7 @@ class CajeroTest extends TestCase
             'stock' => 5
         ]);
 
-        $response = $this->actingAs($user)->getJson('/cajero/api/search-product?barcode=12345');
+        $response = $this->getJson('/cajero/api/search-product?barcode=12345');
 
         $response->assertStatus(200);
         $response->assertJson([
