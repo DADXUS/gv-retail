@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Venta extends Model
 {
+    public const UPDATED_AT = null;
+
     protected $fillable = [
         'tipo_comprobante',
         'serie_comprobante',
