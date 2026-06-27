@@ -18,3 +18,12 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+use App\Http\Controllers\CajeroController;
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/cajero/dashboard', [CajeroController::class, 'index'])->name('cajero.dashboard');
+    Route::get('/cajero/api/search-product', [CajeroController::class, 'searchProduct']);
+    Route::post('/cajero/api/process-sale', [CajeroController::class, 'processSale']);
+    Route::get('/cajero/receipt/{id}', [CajeroController::class, 'downloadReceipt'])->name('cajero.receipt');
+});
