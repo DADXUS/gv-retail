@@ -53,4 +53,41 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const barcodeInput = document.getElementById('barcode');
+            const nombreInput = document.getElementById('nombre');
+
+            // Handle Enter key in barcode input (common for barcode scanners)
+            barcodeInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Prevent form submission
+                    fetchProductName(this.value);
+                }
+            });
+
+            // Handle blur event (when user clicks away or tabs out)
+            barcodeInput.addEventListener('blur', function() {
+                fetchProductName(this.value);
+            });
+
+            function fetchProductName(barcode) {
+                barcode = barcode.trim();
+                if (!barcode) return;
+
+                // Call OpenFoodFacts API
+                fetch(`https://world.openfoodfacts.org/api/v3/product/${barcode}.json`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success' && data.product && data.product.product_name) {
+                            nombreInput.value = data.product.product_name;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching product from OpenFoodFacts:', error);
+                    });
+            }
+        });
+    </script>
 </x-app-layout>
