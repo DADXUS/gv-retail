@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class VentaDetalle extends Model
 {
+    public $timestamps = false;
+
     protected $fillable = [
         'venta_id',
         'producto_id',

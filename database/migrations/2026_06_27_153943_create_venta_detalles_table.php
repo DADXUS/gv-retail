@@ -20,8 +20,7 @@ return new class extends Migration
 
             $table->integer('cantidad')->unsigned()->default(1);
             $table->decimal('precio_unitario', 10, 2);
-
-            $table->timestamps();
+            $table->decimal('subtotal', 10, 2)->storedAs('cantidad * precio_unitario');
         });
     }
 
