@@ -9,9 +9,44 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Escáner y Búsqueda -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Lector de Código de Barras</h3>
+                <div class="flex flex-col space-y-6">
+                    <!-- Datos del Cliente -->
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Datos del Cliente</h3>
+
+                        <div class="mb-4">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="tipo_documento_radio" value="SIN_DNI" class="form-radio" checked>
+                                <span class="ml-2">Sin DNI</span>
+                            </label>
+                            <label class="inline-flex items-center ml-4">
+                                <input type="radio" name="tipo_documento_radio" value="DNI" class="form-radio">
+                                <span class="ml-2">Con DNI</span>
+                            </label>
+                            <label class="inline-flex items-center ml-4">
+                                <input type="radio" name="tipo_documento_radio" value="RUC" class="form-radio">
+                                <span class="ml-2">Con RUC</span>
+                            </label>
+                        </div>
+
+                        <div id="client-search-container" class="hidden">
+                            <label for="num_documento" class="block text-sm font-medium text-gray-700 mb-1" id="label-num-doc">Número de Documento</label>
+                            <div class="flex rounded-md shadow-sm mb-2">
+                                <input type="text" id="num_documento" class="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full rounded-none rounded-l-md sm:text-sm border-gray-300">
+                                <button type="button" id="btn-search-client" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none">
+                                    Buscar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="client-info" class="text-sm font-medium text-green-700 bg-green-50 p-2 rounded hidden mt-2">
+                            <!-- Nombre/Razón social del cliente encontrado -->
+                        </div>
+                    </div>
+
+                    <!-- Escáner y Búsqueda -->
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Lector de Código de Barras</h3>
 
                     <div id="reader" width="100%" class="mb-4 bg-gray-100 rounded"></div>
 
@@ -26,6 +61,7 @@
                             </div>
                         </div>
                     </div>
+                </div>
                 </div>
 
                 <!-- Carrito de Compras -->
@@ -70,12 +106,66 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             let cart = [];
+            let currentClienteId = null;
             const titleEl = document.getElementById('dashboard-title');
             const cartItemsEl = document.getElementById('cart-items');
             const cartTotalEl = document.getElementById('cart-total');
             const btnCheckout = document.getElementById('btn-checkout');
             const manualBarcodeInput = document.getElementById('manual-barcode');
             const btnSearch = document.getElementById('btn-search');
+
+            const radioBtns = document.querySelectorAll('input[name="tipo_documento_radio"]');
+            const searchContainer = document.getElementById('client-search-container');
+            const numDocumentoInput = document.getElementById('num_documento');
+            const btnSearchClient = document.getElementById('btn-search-client');
+            const clientInfoDiv = document.getElementById('client-info');
+            const labelNumDoc = document.getElementById('label-num-doc');
+
+            // --- Lógica del Cliente ---
+            radioBtns.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    const val = e.target.value;
+                    currentClienteId = null;
+                    clientInfoDiv.classList.add('hidden');
+                    numDocumentoInput.value = '';
+
+                    if (val === 'SIN_DNI') {
+                        searchContainer.classList.add('hidden');
+                    } else {
+                        searchContainer.classList.remove('hidden');
+                        labelNumDoc.textContent = val === 'DNI' ? 'Número de DNI' : 'Número de RUC';
+                    }
+                });
+            });
+
+            btnSearchClient.addEventListener('click', async () => {
+                const tipo_documento = document.querySelector('input[name="tipo_documento_radio"]:checked').value;
+                const num_documento = numDocumentoInput.value.trim();
+
+                if (!num_documento) {
+                    alert('Por favor ingrese el número de documento');
+                    return;
+                }
+
+                btnSearchClient.disabled = true;
+                btnSearchClient.textContent = '...';
+
+                try {
+                    const response = await axios.get(`/cajero/api/search-client?tipo_documento=${tipo_documento}&num_documento=${num_documento}`);
+                    if (response.data.success) {
+                        currentClienteId = response.data.cliente.id;
+                        clientInfoDiv.textContent = `Cliente: ${response.data.cliente.razon_social}`;
+                        clientInfoDiv.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    currentClienteId = null;
+                    clientInfoDiv.classList.add('hidden');
+                    alert(error.response?.data?.message || 'Error al buscar el cliente');
+                } finally {
+                    btnSearchClient.disabled = false;
+                    btnSearchClient.textContent = 'Buscar';
+                }
+            });
 
             // --- Escáner de Código de Barras ---
             function onScanSuccess(decodedText, decodedResult) {
@@ -186,13 +276,25 @@
             btnCheckout.addEventListener('click', async () => {
                 if(cart.length === 0) return;
 
+                const tipoDocSeleccionado = document.querySelector('input[name="tipo_documento_radio"]:checked').value;
+                if (tipoDocSeleccionado !== 'SIN_DNI' && !currentClienteId) {
+                    alert('Debe buscar y seleccionar un cliente si ha marcado "Con DNI" o "Con RUC"');
+                    return;
+                }
+
                 btnCheckout.disabled = true;
                 btnCheckout.textContent = 'Procesando...';
 
                 try {
-                    const response = await axios.post('/cajero/api/process-sale', {
+                    const payload = {
                         productos: cart.map(item => ({ id: item.id, cantidad: item.cantidad }))
-                    });
+                    };
+
+                    if (currentClienteId) {
+                        payload.cliente_id = currentClienteId;
+                    }
+
+                    const response = await axios.post('/cajero/api/process-sale', payload);
 
                     if(response.data.success) {
                         alert('Venta registrada correctamente. Descargando comprobante...');
