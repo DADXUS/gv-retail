@@ -30,10 +30,10 @@
 <body>
     <div class="ticket">
         <div class="center">
-            <div class="bold">{{ env('APP_NAME', 'Mi Tienda') }}</div>
-            <div class="small">RUC: {{ env('APP_RUC', '00000000000') }}</div>
-            <div class="small">{{ env('APP_ADDRESS', 'Dirección de la tienda') }}</div>
-            <div class="small">Tlf: {{ env('APP_PHONE', '-') }}</div>
+            <div class="bold">{{ env('APP_NAME', 'GigaMarket') }}</div>
+            <div class="small">RUC: {{ env('APP_RUC', '20748195032') }}</div>
+            <div class="small">{{ env('APP_ADDRESS', 'Av. Los Laureles Nro. 452, Urb. El Palmar, Trujillo, La Libertad.') }}</div>
+            <div class="small">Tlf: {{ env('APP_PHONE', '997 123 456') }}</div>
         </div>
 
         <div class="sep"></div>
